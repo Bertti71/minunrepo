@@ -1,0 +1,102 @@
+#include <iostream>
+#include <string>
+
+class Pankkitili {
+protected:
+    std::string omistaja;
+    double saldo;
+
+public:
+    Pankkitili(const std::string& nimi) : omistaja(nimi), saldo(0) {}
+
+    double getBalance() const { return saldo; }
+
+    virtual bool deposit(double amount) {
+        if (amount > 0) {
+            saldo += amount;
+            return true;
+        }
+        return false;
+    }
+
+    virtual bool withdraw(double amount) {
+        if (amount > 0 && saldo >= amount) {
+            saldo -= amount;
+            return true;
+        }
+        return false;
+    }
+};
+
+class Luottotili : public Pankkitili {
+private:
+    double luottoRaja;
+
+public:
+    Luottotili(const std::string& nimi, double luottoraja) : Pankkitili(nimi), luottoRaja(-luottoraja) {}
+
+    bool withdraw(double amount) override {
+        if (amount > 0 && (saldo - amount) >= luottoRaja) {
+            saldo -= amount;
+            return true;
+        }
+        return false;
+    }
+
+    bool deposit(double amount) override {
+        if (amount > 0 && (saldo + amount) <= 0) { 
+            saldo += amount;
+            return true;
+        }
+        return false;
+    }
+};
+
+class Asiakas {
+private:
+    std::string nimi;
+    Pankkitili kayttotili;
+    Luottotili luottotili;
+
+public:
+    Asiakas(const std::string& nimi, double luottoraja)
+        : nimi(nimi), kayttotili(nimi), luottotili(nimi, luottoraja) {}
+
+    std::string getNimi() const { return nimi; }
+
+    void showSaldo() const {
+        std::cout << "Asiakas: " << nimi << std::endl;
+        std::cout << "Pankkitilin saldo: " << kayttotili.getBalance() << " euroa" << std::endl;
+        std::cout << "Luottotilin saldo: " << luottotili.getBalance() << " euroa" << std::endl;
+    }
+
+    bool talletus(double amount) { return kayttotili.deposit(amount); }
+    bool nosto(double amount) { return kayttotili.withdraw(amount); }
+    bool luotonMaksu(double amount) { return luottotili.deposit(amount); }
+    bool luotonNosto(double amount) { return luottotili.withdraw(amount); }
+
+    bool tiliSiirto(double amount, Asiakas& vastaanottaja) {
+        if (amount > 0 && kayttotili.withdraw(amount)) {
+            return vastaanottaja.talletus(amount);
+        }
+        return false;
+    }
+};
+
+int main() {
+    Asiakas asiakas1("Vertti Vallineva", 5000);
+    Asiakas asiakas2("Pertti Pallineva", 500);
+
+    asiakas1.talletus(1000);
+    asiakas1.nosto(200);
+    asiakas1.luotonNosto(300);
+    asiakas1.luotonMaksu(100);
+
+    asiakas2.talletus(500);
+    asiakas1.tiliSiirto(150, asiakas2);
+
+    asiakas1.showSaldo();
+    asiakas2.showSaldo();
+
+    return 0;
+}
