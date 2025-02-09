@@ -1,0 +1,70 @@
+#include <iostream>
+#include <string>
+
+class Seuraaja {
+public:
+    std::string nimi;
+    Seuraaja* next;
+    
+    Seuraaja(std::string n) : nimi(n), next(nullptr) {
+        std::cout << "Luodaan seuraaja " << nimi << std::endl;
+    }
+    void paivitys(const std::string& viesti) {
+        std::cout << nimi << " sai viestin: " << viesti << std::endl;
+    }
+};
+class Notifikaattori {
+private:
+    Seuraaja* seuraajat = nullptr;
+
+public:
+    Notifikaattori() {
+        std::cout << "Luodaan notifikaattori" << std::endl;
+    }
+    void lisaa(Seuraaja* uusi) {
+        std::cout << "Notifikaattori lisaa seuraajan " << uusi->nimi << std::endl;
+        uusi->next = seuraajat;
+        seuraajat = uusi;
+    }
+    void poista(Seuraaja* poistettava) {
+        std::cout << "Notifikaattori poistaa seuraajan " << poistettava->nimi << std::endl;
+        Seuraaja** nykyinen = &seuraajat;
+        while (*nykyinen && *nykyinen != poistettava) {
+            nykyinen = &((*nykyinen)->next);
+        }
+        if (*nykyinen) {
+            *nykyinen = poistettava->next;
+        }
+    }
+    void tulosta() {
+        std::cout << "Notifikaattorin seuraajat:" << std::endl;
+        for (Seuraaja* s = seuraajat; s; s = s->next) {
+            std::cout << s->nimi << std::endl;
+        }
+    }
+    void postita(const std::string& viesti) {
+        std::cout << "Notifikaattori postaa viestin: " << viesti << std::endl;
+        for (Seuraaja* s = seuraajat; s; s = s->next) {
+            s->paivitys(viesti);
+        }
+    }
+};
+int main() {
+    Notifikaattori n;
+    
+    Seuraaja a("A"), b("B"), c("C");
+    
+    n.lisaa(&a);
+    n.lisaa(&b);
+    n.lisaa(&c);
+    
+    n.tulosta();
+    
+    n.postita("Tama on viesti 1");
+    
+    n.poista(&b);
+    
+    n.postita("Tama on viesti 2");
+    
+    return 0;
+}
