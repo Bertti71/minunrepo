@@ -1,0 +1,99 @@
+#include <QApplication>
+#include <QWidget>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QVBoxLayout>
+#include <QGridLayout>
+#include <QLabel>
+
+class Calculator : public QWidget {
+    Q_OBJECT
+
+private:
+    QLineEdit *display;
+    QString currentInput;
+    double operand1 = 0.0;
+    char operation = '\0';
+
+public:
+    Calculator(QWidget *parent = nullptr) : QWidget(parent) {
+        QGridLayout *layout = new QGridLayout(this);
+
+        display = new QLineEdit(this);
+        display->setReadOnly(true);
+        layout->addWidget(display, 0, 0, 1, 4);
+
+        QString buttons[] = {
+            "7", "8", "9", "/",
+            "4", "5", "6", "*",
+            "1", "2", "3", "-",
+            "0", ".", "=", "+"
+        };
+
+        int row = 1, col = 0;
+        for (const QString &buttonText : buttons) {
+            QPushButton *button = new QPushButton(buttonText, this);
+            layout->addWidget(button, row, col);
+            connect(button, &QPushButton::clicked, this, [=]() { handleButtonClick(buttonText); });
+            col++;
+            if (col > 3) {
+                col = 0;
+                row++;
+            }
+        }
+
+        QPushButton *clearButton = new QPushButton("C", this);
+        layout->addWidget(clearButton, row, 0);
+        connect(clearButton, &QPushButton::clicked, this, [=]() { clear(); });
+
+    }
+
+private slots:
+    void handleButtonClick(const QString &buttonText) {
+        if (buttonText >= "0" && buttonText <= "9" || buttonText == ".") {
+            currentInput += buttonText;
+            display->setText(currentInput);
+        } else if (buttonText == "C") {
+            clear();
+        } else if (buttonText == "+" || buttonText == "-" || buttonText == "*" || buttonText == "/") {
+            if (!currentInput.isEmpty()) {
+                operand1 = currentInput.toDouble();
+                currentInput.clear();
+            }
+            operation = buttonText.at(0).toLatin1();
+            display->clear();
+        } else if (buttonText == "=") {
+            if (!currentInput.isEmpty()) {
+                double operand2 = currentInput.toDouble();
+                double result = 0.0;
+                switch (operation) {
+                    case '+': result = operand1 + operand2; break;
+                    case '-': result = operand1 - operand2; break;
+                    case '*': result = operand1 * operand2; break;
+                    case '/': result = operand1 / operand2; break;
+                }
+                display->setText(QString::number(result));
+                currentInput.clear();
+                operand1 = result;
+                operation = '\0';
+            }
+        }
+    }
+
+    void clear() {
+        currentInput.clear();
+        display->clear();
+        operand1 = 0.0;
+        operation = '\0';
+    }
+};
+
+int main(int argc, char *argv[]) {
+    QApplication app(argc, argv);
+    Calculator calculator;
+    calculator.setWindowTitle("Simple Calculator");
+    calculator.show();
+    return app.exec();
+}
+
+#include "main.moc"
